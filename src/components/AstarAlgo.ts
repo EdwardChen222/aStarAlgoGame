@@ -171,7 +171,7 @@ function printGrid(grid: aNode[][], start: aNode, goal: aNode, path: aNode[] | n
     console.log(gridString);
 }
 
-function printGrid2(grid: aNode[][]): void {
+function printGridOrder(grid: aNode[][]): void {
     let gridString = "";
 
     for (let y = 0; y < grid[0].length; y++) {
@@ -225,7 +225,7 @@ function runTestCases() {
         console.log("No path found.");
     }
     printGrid(grid, grid[0][0], grid[9][9], path);
-    printGrid2(grid);
+    printGridOrder(grid);
     printCosts(grid);
 
     // Test 2: Path from (0, 0) to (2, 5) - Directly into the barrier, expecting path around it
@@ -239,7 +239,7 @@ function runTestCases() {
         console.log("No path found.");
     }
     printGrid(grid2, grid2[0][0], grid2[0][5], path1);
-    printGrid2(grid2);
+    printGridOrder(grid2);
     printCosts(grid2);
 
 
@@ -254,7 +254,7 @@ function runTestCases() {
         console.log("No path found.");
     }
     printGrid(grid3, grid3[0][0], grid3[1][7], path2);
-    printGrid2(grid3);
+    printGridOrder(grid3);
     printCosts(grid3);
 }
 
@@ -310,24 +310,5 @@ function crossWordMaze(){
     addObstacle(grid,4,2);
     return grid;
 }
-// // Adding a horizontal barrier with a gap
-// for (let i = 0; i < gridCols; i++) {
-//     if (i !== 4) { // Gap at (4, 2)
-//         addObstacle(2, i);
-//     }
-// }
-
-// addObstacle(4,0);
-// addObstacle(4,2);
-// addObstacle(4,3);
-// addObstacle(4,4);
-// addObstacle(4,5);
-
-// // Adding a vertical barrier with a gap
-// for (let j = 0; j < gridRows; j++) {
-//     if (j !== 5) { // Gap at (6, 5)
-//         addObstacle(j, 6);
-//     }
-// }
 
 runTestCases();
