@@ -146,7 +146,6 @@ export class AStarPathfinder {
     // ... Other helper methods as needed ...
 }
 
-
 function printGrid(grid: aNode[][], start: aNode, goal: aNode, path: aNode[] | null): void {
     let gridString = "";
 
