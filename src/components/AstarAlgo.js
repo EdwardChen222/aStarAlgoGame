@@ -159,11 +159,28 @@ function printGrid(grid, start, goal, path) {
     }
     console.log(gridString);
 }
+function printCosts(grid) {
+    console.log("Grid Costs:");
+    console.log("Format: (G,H)\n");
+    for (var y = 0; y < grid[0].length; y++) { // Assuming grid is rectangular
+        var rowString = "";
+        for (var x = 0; x < grid.length; x++) {
+            var node = grid[x][y];
+            // Formatting the costs for display
+            var gCost = isFinite(node.gCost) ? node.gCost.toString() : "Inf";
+            var hCost = node.hCost.toString();
+            rowString += "(".concat(gCost, ",").concat(hCost, ")\t");
+        }
+        console.log(rowString);
+        console.log("\n"); // New line for better separation between rows
+    }
+}
 function runTestCases() {
+    var grid = crossWordMaze();
     var pathfinder = new AStarPathfinder(grid);
     // Test 1: Path from (0, 0) to (9, 9)
     console.log("Test 1: Path from (0, 0) to (9, 9)");
-    var path = pathfinder.findPath(0, 0, 9, 9);
+    var path = pathfinder.findPath(0, 0, 14, 14);
     if (path) {
         console.log("Path found:", path.map(function (node) { return "(".concat(node.x, ", ").concat(node.y, ")"); }).join(" -> "));
     }
@@ -171,54 +188,94 @@ function runTestCases() {
         console.log("No path found.");
     }
     printGrid(grid, grid[0][0], grid[9][9], path);
+    printCosts(grid);
     // Test 2: Path from (0, 0) to (2, 5) - Directly into the barrier, expecting path around it
     console.log("Test 2: Path from (0, 0) to (0, 5)");
-    path = pathfinder.findPath(0, 0, 0, 5);
-    if (path) {
-        console.log("Path found:", path.map(function (node) { return "(".concat(node.x, ", ").concat(node.y, ")"); }).join(" -> "));
+    var path1 = pathfinder.findPath(0, 0, 0, 5);
+    if (path1) {
+        console.log("Path found:", path1.map(function (node) { return "(".concat(node.x, ", ").concat(node.y, ")"); }).join(" -> "));
     }
     else {
         console.log("No path found.");
     }
-    printGrid(grid, grid[0][0], grid[0][5], path);
+    printGrid(grid, grid[0][0], grid[0][5], path1);
+    printCosts(grid);
     // Test 3: Path from (0, 0) to an enclosed location (1, 6), expecting no path
     console.log("Test 3: Path from (0, 0) to (1, 7) - Enclosed by obstacles");
-    path = pathfinder.findPath(0, 0, 1, 7);
-    if (path) {
-        console.log("Path found:", path.map(function (node) { return "(".concat(node.x, ", ").concat(node.y, ")"); }).join(" -> "));
+    var path2 = pathfinder.findPath(0, 0, 1, 7);
+    if (path2) {
+        console.log("Path found:", path2.map(function (node) { return "(".concat(node.x, ", ").concat(node.y, ")"); }).join(" -> "));
     }
     else {
         console.log("No path found.");
     }
-    printGrid(grid, grid[0][0], grid[1][7], path);
+    printGrid(grid, grid[0][0], grid[1][7], path2);
+    printCosts(grid);
 }
-var gridRows = 10; // Number of rows in the grid
-var gridCols = 10; // Number of columns in the grid
+var gridRows = 15; // Number of rows in the grid
+var gridCols = 15; // Number of columns in the grid
 // Initialize the grid with aNode instances
-var grid = Array.from({ length: gridRows }, function (_, x) {
-    return Array.from({ length: gridCols }, function (_, y) { return new aNode(x, y); });
-});
+// const grid: aNode[][] = Array.from({ length: gridRows }, (_, x) =>
+//     Array.from({ length: gridCols }, (_, y) => new aNode(x, y))
+// );
 //Function to mark a grid position as an obstacle
-function addObstacle(x, y) {
+function addObstacle(grid, x, y) {
     if (x >= 0 && x < gridRows && y >= 0 && y < gridCols) {
         grid[x][y].isObstacle = true;
     }
 }
-// Adding a horizontal barrier with a gap
-for (var i = 0; i < gridCols; i++) {
-    if (i !== 4) { // Gap at (4, 2)
-        addObstacle(2, i);
-    }
+//initialize the crossword puzzle maze
+function crossWordMaze() {
+    var grid = Array.from({ length: 15 }, function (_, x) {
+        return Array.from({ length: 15 }, function (_, y) { return new aNode(x, y); });
+    });
+    addObstacle(grid, 4, 0);
+    addObstacle(grid, 4, 1);
+    addObstacle(grid, 10, 0);
+    addObstacle(grid, 10, 1);
+    addObstacle(grid, 3, 3);
+    addObstacle(grid, 7, 3);
+    addObstacle(grid, 11, 3);
+    addObstacle(grid, 0, 4);
+    addObstacle(grid, 1, 4);
+    addObstacle(grid, 6, 4);
+    addObstacle(grid, 13, 4);
+    addObstacle(grid, 14, 4);
+    addObstacle(grid, 5, 5);
+    addObstacle(grid, 4, 6);
+    addObstacle(grid, 3, 7);
+    addObstacle(grid, 11, 7);
+    addObstacle(grid, 10, 8);
+    addObstacle(grid, 9, 9);
+    addObstacle(grid, 0, 10);
+    addObstacle(grid, 1, 10);
+    addObstacle(grid, 8, 10);
+    addObstacle(grid, 13, 10);
+    addObstacle(grid, 14, 10);
+    addObstacle(grid, 3, 11);
+    addObstacle(grid, 7, 11);
+    addObstacle(grid, 11, 11);
+    addObstacle(grid, 4, 13);
+    addObstacle(grid, 10, 13);
+    addObstacle(grid, 4, 14);
+    addObstacle(grid, 10, 14);
+    return grid;
 }
-addObstacle(4, 0);
-addObstacle(4, 2);
-addObstacle(4, 3);
-addObstacle(4, 4);
-addObstacle(4, 5);
-// Adding a vertical barrier with a gap
-for (var j = 0; j < gridRows; j++) {
-    if (j !== 5) { // Gap at (6, 5)
-        addObstacle(j, 6);
-    }
-}
+// // Adding a horizontal barrier with a gap
+// for (let i = 0; i < gridCols; i++) {
+//     if (i !== 4) { // Gap at (4, 2)
+//         addObstacle(2, i);
+//     }
+// }
+// addObstacle(4,0);
+// addObstacle(4,2);
+// addObstacle(4,3);
+// addObstacle(4,4);
+// addObstacle(4,5);
+// // Adding a vertical barrier with a gap
+// for (let j = 0; j < gridRows; j++) {
+//     if (j !== 5) { // Gap at (6, 5)
+//         addObstacle(j, 6);
+//     }
+// }
 runTestCases();
