@@ -17,6 +17,7 @@ export class GameScene extends PIXI.Container {
     //private obstacleSprite: PIXI.Sprite = new PIXI.Sprite(this.obstacleTexture);
     private optimizedPath: aNode[] | null = null;
     private pathVisuals: PIXI.Graphics[] = [];
+    private pathVisible = false;
 
     constructor(app: PIXI.Application) {
         super();
@@ -26,8 +27,10 @@ export class GameScene extends PIXI.Container {
         this.board.x = (this.app.screen.width - ((this.grid.length * this.cellSize) + ((this.grid.length - 1) * this.gap))) / 2; // Adjust for gaps
         this.board.y = (this.app.screen.height - ((this.grid[0].length * this.cellSize) + ((this.grid[0].length - 1) * this.gap))) / 2; // Adjust for gaps
         this.addChild(this.board);
+        this.createToggleButton();
         this.initializeGame();
-    }
+    }  
+    
 
     private initializeGame(): void {
         this.setupBoard();
@@ -78,6 +81,19 @@ export class GameScene extends PIXI.Container {
         }
     }
 
+    public screenToGrid(screenX: number, screenY: number): { gridX: number, gridY: number } {
+        // First, adjust the screenX and screenY coordinates relative to the board's position
+        const relativeX = screenX - this.board.x;
+        const relativeY = screenY - this.board.y;
+    
+        // Next, calculate the grid coordinates. Since cells include gaps, add the gap to the cellSize
+        // for calculation. Use Math.floor to round down to the nearest whole number.
+        const gridX = Math.floor(relativeX / (this.cellSize + this.gap));
+        const gridY = Math.floor(relativeY / (this.cellSize + this.gap));
+    
+        return { gridX, gridY };
+    }
+    
     private setupBoard(): void {
         const texture = PIXI.Texture.from('grid.png');
         for (let row = 0; row < this.grid.length; row++) {
@@ -120,7 +136,7 @@ export class GameScene extends PIXI.Container {
         const pathfinder = new AStarPathfinder(this.grid);
 
         this.optimizedPath = pathfinder.findPath(0, 0, this.grid.length - 1, this.grid[0].length - 1);
-        this.renderPath();
+        //this.renderPath();
     }
 
     // private createGridFromGameState(x: number, y: number): aNode[][] {
@@ -129,6 +145,7 @@ export class GameScene extends PIXI.Container {
     // }
 
     private renderPath(): void {
+        this.clearPath();
         this.pathVisuals.forEach(visual => visual.destroy());
         this.pathVisuals = [];
 
@@ -140,5 +157,54 @@ export class GameScene extends PIXI.Container {
                 this.pathVisuals.push(marker);
             });
         }
+    }
+    togglePathVisibility(): void {
+        this.pathVisible = !this.pathVisible; // Toggle the visibility state
+        if (this.pathVisible) {
+            // If the path should be visible, render it
+            this.renderPath();
+        } else {
+            // If the path should not be visible, clear it
+            this.clearPath();
+        }
+    }
+
+    private clearPath(): void {
+        // Remove or reset the visuals for the path from the screen
+        this.pathVisuals.forEach(visual => {
+            this.app.stage.removeChild(visual); // Remove the visual from the stage
+            visual.destroy(); // Optional: If you won't reuse it, destroy it
+        });
+        this.pathVisuals = []; // Clear the array for the next path visualization
+    }
+
+    createToggleButton(): void {
+        // Button background
+        const button = new PIXI.Graphics()
+            .beginFill(0x0a8a0a) // Button color
+            .drawRoundedRect(0, 0, 150, 40, 10) // x, y, width, height, radius
+            .endFill();
+        button.x = this.app.screen.width - 160; // Position the button
+        button.y = 10;
+        button.interactive = true; // Make the graphics object interactive
+        button.cursor = 'pointer'; // Change the cursor on hover
+
+        // Button text
+        const buttonText = new PIXI.Text('Toggle Path', {
+            fontFamily: 'Arial',
+            fontSize: 14,
+            fill: 0xffffff,
+        });
+        buttonText.x = button.width / 2 - buttonText.width / 2;
+        buttonText.y = button.height / 2 - buttonText.height / 2;
+
+        button.addChild(buttonText);
+
+        // Click event
+        button.on('pointerdown', () => {
+            this.togglePathVisibility();
+        });
+
+        this.app.stage.addChild(button);
     }
 }
