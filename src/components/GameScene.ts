@@ -20,6 +20,7 @@ export class GameScene extends PIXI.Container {
     private pathVisible = false;
     private score: number = 0;
     private scoreText: PIXI.Text;
+    private pathfinder: AStarPathfinder;
 
     constructor(app: PIXI.Application) {
         super();
@@ -37,6 +38,7 @@ export class GameScene extends PIXI.Container {
             fill: 0xffffff,
         });
         this.createScoreboard();
+        this.pathfinder = new AStarPathfinder(this.grid);
     }  
     
     private createScoreboard(): void {
@@ -53,30 +55,6 @@ export class GameScene extends PIXI.Container {
     private updateScore(): void {
         this.score++;
         this.scoreText.text = `Moves: ${this.score}`;
-    }
-
-    private highlightPossibleMoves(): void {
-        // Clear previous highlights
-        this.clearPath();
-    
-        // Assuming dog's current position is known
-        const dogCurrentPos = { x: this.dogSprite.x, y: this.dogSprite.y };
-        const dogGridPos = this.screenToGrid(dogCurrentPos.x, dogCurrentPos.y);
-    
-        // Get accessible neighbors
-        const accessibleNeighbors = this.pathfinder.getNeighbors(this.grid[dogGridPos.gridX][dogGridPos.gridY]);
-    
-        accessibleNeighbors.forEach(neighbor => {
-            if (!neighbor.isObstacle) {
-                const marker = new PIXI.Graphics();
-                marker.beginFill(0x00ff00, 0.5).drawCircle(neighbor.x * (this.cellSize + this.gap) + this.cellSize / 2, neighbor.y * (this.cellSize + this.gap) + this.cellSize / 2, this.cellSize / 4).endFill();
-                marker.interactive = true;
-                marker.buttonMode = true;
-                marker.on('pointerdown', () => this.moveDogTo(neighbor.x, neighbor.y));
-                this.board.addChild(marker);
-                this.pathVisuals.push(marker); // Add to pathVisuals for easy cleanup
-            }
-        });
     }
     
     private initializeGame(): void {
@@ -128,11 +106,36 @@ export class GameScene extends PIXI.Container {
         }
     }
 
+    public gridToScreen(gridX: number, gridY: number): { x: number, y: number } {
+        // Calculate screen coordinates based on grid coordinates
+        const x = this.board.x + gridX * (this.cellSize + this.gap) + this.cellSize / 2;
+        const y = this.board.y + gridY * (this.cellSize + this.gap) + this.cellSize / 2;
+    
+        return { x, y };
+    }
+
+    public gridToScreenSprites(gridX: number, gridY: number): { x: number, y: number } {
+        // Calculate screen coordinates based on grid coordinates
+        const x = gridX * (this.cellSize + this.gap) + this.cellSize / 2;
+        const y = gridY * (this.cellSize + this.gap) + this.cellSize / 2;
+    
+        return { x, y };
+    }
+    
+    public screenToGridSprites(screenX: number, screenY: number): { gridX: number, gridY: number } {
+        // First, adjust the screenX and screenY coordinates relative to the board's position
+        // Next, calculate the grid coordinates. Since cells include gaps, add the gap to the cellSize
+        // for calculation. Use Math.floor to round down to the nearest whole number.
+        const gridX = Math.floor(screenX / (this.cellSize + this.gap));
+        const gridY = Math.floor(screenY / (this.cellSize + this.gap));
+    
+        return { gridX, gridY };
+    }
+
     public screenToGrid(screenX: number, screenY: number): { gridX: number, gridY: number } {
         // First, adjust the screenX and screenY coordinates relative to the board's position
         const relativeX = screenX - this.board.x;
         const relativeY = screenY - this.board.y;
-    
         // Next, calculate the grid coordinates. Since cells include gaps, add the gap to the cellSize
         // for calculation. Use Math.floor to round down to the nearest whole number.
         const gridX = Math.floor(relativeX / (this.cellSize + this.gap));
@@ -214,6 +217,61 @@ export class GameScene extends PIXI.Container {
             // If the path should not be visible, clear it
             this.clearPath();
         }
+    }
+
+    // In GameScene.ts
+
+    public getDogPosition(): { x: number, y: number } {
+        // Assuming the dog's position is stored or can be calculated
+        return { x: this.dogSprite.position.x, y: this.dogSprite.position.y };
+    }
+
+    public getPossibleMoves(): aNode[] {
+        // Assuming you have a method to calculate possible moves based on the dog's current position
+        const dogPos = this.getDogPosition();
+        const dogGridPos = this.screenToGridSprites(dogPos.x, dogPos.y);
+        if (dogGridPos.gridX < 0 || dogGridPos.gridX >= this.grid.length || dogGridPos.gridY < 0 || dogGridPos.gridY >= this.grid[0].length) {
+            return []; // Return an empty array if the dog's position is out of bounds
+        }
+        return this.pathfinder.getNeighbors(this.grid[dogGridPos.gridX][dogGridPos.gridY]);
+    }
+
+    public moveDog(gridX: number, gridY: number): void {
+        // Public method to move the dog, similar to the moveDogTo method but simplified for the example
+        this.moveDogTo(gridX, gridY);
+    }
+
+    private moveDogTo(gridX: number, gridY: number): void {
+        // Convert grid coordinates to screen coordinates
+        const screenPos = this.gridToScreenSprites(gridX, gridY);
+    
+        // Move the dog sprite
+        this.dogSprite.x = screenPos.x;
+        this.dogSprite.y = screenPos.y;
+    
+        // Update the score
+        this.updateScore();
+    
+        // Highlight new possible moves
+        // this.highlightPossibleMoves();
+    }
+
+    public highlightNodes(nodes: aNode[]): void {
+        // Clear previous highlights if any
+        this.clearPath();
+
+        nodes.forEach(node => {
+            const marker = new PIXI.Graphics();
+            marker.beginFill(0x00ff00, 0.5); // Use a green color with some transparency
+            marker.drawCircle(
+                node.x * (this.cellSize + this.gap) + this.cellSize / 2,
+                node.y * (this.cellSize + this.gap) + this.cellSize / 2,
+                this.cellSize / 4); // Adjust the size as needed
+            marker.endFill();
+
+            this.board.addChild(marker);
+            this.pathVisuals.push(marker); // Keep track of these visuals for easy cleanup
+        });
     }
 
     private clearPath(): void {

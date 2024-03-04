@@ -58,7 +58,24 @@ export class AStarPathfinder {
         return lowestFCostNode;
     }
 
-    private getNeighbors(node: aNode): aNode[] {
+    public clearGrid(): void {
+        for (let x = 0; x < this.grid.length; x++) {
+            for (let y = 0; y < this.grid[x].length; y++) {
+                this.grid[x][y].gCost = Infinity;
+                this.grid[x][y].hCost = 0;
+                this.grid[x][y].hCost = 0;
+                this.grid[x][y].parent = null;
+                this.grid[x][y].order = -1;
+                // node.isObstacle remains unchanged
+            }
+        }
+        // Also reset the openList, closedList, and explorationOrder
+        this.openList = [];
+        this.closedList = this.grid.map(() => new Array(this.grid[0].length).fill(false));
+        this.explorationOrder = 0;
+    }
+    
+    public getNeighbors(node: aNode): aNode[] {
         // Return the traversable neighbors of the given node.
         const neighbors: aNode[] = [];
         const directions = [
@@ -144,7 +161,7 @@ export class AStarPathfinder {
         return null; // No path found
     }
 
-    // ... Other helper methods as needed ...
+    
 }
 
 function printGrid(grid: aNode[][], start: aNode, goal: aNode, path: aNode[] | null): void {
@@ -212,7 +229,10 @@ function printCosts(grid: aNode[][]): void {
 }
 
 
-function runTestCases() {
+function runTestCases(flag: boolean) {
+    if(flag){
+        return;
+    }
     const grid = crossWordMaze();
     const pathfinder = new AStarPathfinder(grid);
 
@@ -230,32 +250,30 @@ function runTestCases() {
 
     // Test 2: Path from (0, 0) to (2, 5) - Directly into the barrier, expecting path around it
     console.log("Test 2: Path from (0, 0) to (0, 5)");
-    const grid2 = crossWordMaze();
-    const pathfinder2 = new AStarPathfinder(grid2);
-    let path1 = pathfinder2.findPath(0, 0, 0, 5);
+    pathfinder.clearGrid();
+    let path1 = pathfinder.findPath(0, 0, 0, 5);
     if (path1) {
         console.log("Path found:", path1.map(node => `(${node.x}, ${node.y})`).join(" -> "));
     } else {
         console.log("No path found.");
     }
-    printGrid(grid2, grid2[0][0], grid2[0][5], path1);
-    printGridOrder(grid2);
-    printCosts(grid2);
+    printGrid(grid, grid[0][0], grid[0][5], path1);
+    printGridOrder(grid);
+    printCosts(grid);
 
 
     // Test 3: Path from (0, 0) to an enclosed location (1, 6), expecting no path
     console.log("Test 3: Path from (0, 0) to (1, 7) - Enclosed by obstacles");
-    const grid3 = crossWordMaze()
-    const pathfinder3 = new AStarPathfinder(grid3);
-    let path2 = pathfinder3.findPath(0, 0, 1, 7);
+    pathfinder.clearGrid();
+    let path2 = pathfinder.findPath(0, 0, 1, 7);
     if (path2) {
         console.log("Path found:", path2.map(node => `(${node.x}, ${node.y})`).join(" -> "));
     } else {
         console.log("No path found.");
     }
-    printGrid(grid3, grid3[0][0], grid3[1][7], path2);
-    printGridOrder(grid3);
-    printCosts(grid3);
+    printGrid(grid, grid[0][0], grid[1][7], path2);
+    printGridOrder(grid);
+    printCosts(grid);
 }
 
 
@@ -311,4 +329,4 @@ function crossWordMaze(){
     return grid;
 }
 
-runTestCases();
+runTestCases(true);

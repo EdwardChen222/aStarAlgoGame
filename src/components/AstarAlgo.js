@@ -6,21 +6,26 @@ var aNode = /** @class */ (function () {
         if (isObstacle === void 0) { isObstacle = false; }
         this.gCost = Infinity; // Cost from start to this node
         this.hCost = 0; // Heuristic cost from this node to the end
-        this.fCost = 0; // Total cost (gCost + hCost)
         this.parent = null;
         this.isObstacle = false; // Indicates if the node is an obstacle
+        this.order = -1;
         this.x = x;
         this.y = y;
         this.isObstacle = isObstacle;
     }
-    aNode.prototype.calculateFCost = function () {
-        this.fCost = this.gCost + this.hCost;
-    };
+    Object.defineProperty(aNode.prototype, "fCost", {
+        get: function () {
+            return this.gCost + this.hCost;
+        },
+        enumerable: false,
+        configurable: true
+    });
     return aNode;
 }());
 exports.aNode = aNode;
 var AStarPathfinder = /** @class */ (function () {
     function AStarPathfinder(grid) {
+        this.explorationOrder = 0; // Keeps track of the exploration order
         this.openList = [];
         this.closedList = [];
         this.grid = grid;
@@ -51,6 +56,23 @@ var AStarPathfinder = /** @class */ (function () {
             }
         }
         return lowestFCostNode;
+    };
+    AStarPathfinder.prototype.clearGrid = function () {
+        var _this = this;
+        for (var x = 0; x < this.grid.length; x++) {
+            for (var y = 0; y < this.grid[x].length; y++) {
+                this.grid[x][y].gCost = Infinity;
+                this.grid[x][y].hCost = 0;
+                this.grid[x][y].hCost = 0;
+                this.grid[x][y].parent = null;
+                this.grid[x][y].order = -1;
+                // node.isObstacle remains unchanged
+            }
+        }
+        // Also reset the openList, closedList, and explorationOrder
+        this.openList = [];
+        this.closedList = this.grid.map(function () { return new Array(_this.grid[0].length).fill(false); });
+        this.explorationOrder = 0;
     };
     AStarPathfinder.prototype.getNeighbors = function (node) {
         // Return the traversable neighbors of the given node.
@@ -95,12 +117,14 @@ var AStarPathfinder = /** @class */ (function () {
         this.openList.push(this.grid[startX][startY]); // Add the start node to the open list
         this.grid[startX][startY].gCost = 0; // The cost of going from start to start is zero
         this.grid[startX][startY].hCost = this.heuristic(this.grid[startX][startY], this.grid[goalX][goalY]);
-        this.grid[startX][startY].calculateFCost();
+        this.explorationOrder = 0;
+        // this.grid[startX][startY].calculateFCost();
         while (this.openList.length > 0) {
             var currentNode = this.getLowestFCostNode();
             if (!currentNode) {
                 return null; // Path not found
             }
+            currentNode.order = ++this.explorationOrder;
             // Check if we've reached the goal
             if (currentNode.x === goalX && currentNode.y === goalY) {
                 return this.reconstructPath(currentNode); // Reconstruct and return the path
@@ -119,7 +143,7 @@ var AStarPathfinder = /** @class */ (function () {
                     neighbor.parent = currentNode;
                     neighbor.gCost = tentativeGCost;
                     neighbor.hCost = this.heuristic(neighbor, this.grid[goalX][goalY]);
-                    neighbor.calculateFCost();
+                    // neighbor.calculateFCost();
                     if (!this.openList.includes(neighbor)) {
                         this.openList.push(neighbor);
                     }
@@ -159,9 +183,28 @@ function printGrid(grid, start, goal, path) {
     }
     console.log(gridString);
 }
+function printGridOrder(grid) {
+    var gridString = "";
+    for (var y = 0; y < grid[0].length; y++) {
+        for (var x = 0; x < grid.length; x++) {
+            var node = grid[x][y];
+            if (node.order > 0) {
+                gridString += "".concat(node.order.toString().padStart(3, ' '), " "); // Pad the order for alignment
+            }
+            else if (node.isObstacle) {
+                gridString += ' O  ';
+            }
+            else {
+                gridString += ' _  ';
+            }
+        }
+        gridString += '\n';
+    }
+    console.log(gridString);
+}
 function printCosts(grid) {
     console.log("Grid Costs:");
-    console.log("Format: (G,H)\n");
+    console.log("Format: (G,H,F)\n");
     for (var y = 0; y < grid[0].length; y++) { // Assuming grid is rectangular
         var rowString = "";
         for (var x = 0; x < grid.length; x++) {
@@ -169,7 +212,8 @@ function printCosts(grid) {
             // Formatting the costs for display
             var gCost = isFinite(node.gCost) ? node.gCost.toString() : "Inf";
             var hCost = node.hCost.toString();
-            rowString += "(".concat(gCost, ",").concat(hCost, ")\t");
+            var fCost = isFinite(node.fCost) ? node.fCost.toString() : "Inf";
+            rowString += "(".concat(gCost, ",").concat(hCost, ", ").concat(fCost, ")\t");
         }
         console.log(rowString);
         console.log("\n"); // New line for better separation between rows
@@ -188,9 +232,11 @@ function runTestCases() {
         console.log("No path found.");
     }
     printGrid(grid, grid[0][0], grid[9][9], path);
+    printGridOrder(grid);
     printCosts(grid);
     // Test 2: Path from (0, 0) to (2, 5) - Directly into the barrier, expecting path around it
     console.log("Test 2: Path from (0, 0) to (0, 5)");
+    pathfinder.clearGrid();
     var path1 = pathfinder.findPath(0, 0, 0, 5);
     if (path1) {
         console.log("Path found:", path1.map(function (node) { return "(".concat(node.x, ", ").concat(node.y, ")"); }).join(" -> "));
@@ -199,9 +245,11 @@ function runTestCases() {
         console.log("No path found.");
     }
     printGrid(grid, grid[0][0], grid[0][5], path1);
+    printGridOrder(grid);
     printCosts(grid);
     // Test 3: Path from (0, 0) to an enclosed location (1, 6), expecting no path
     console.log("Test 3: Path from (0, 0) to (1, 7) - Enclosed by obstacles");
+    pathfinder.clearGrid();
     var path2 = pathfinder.findPath(0, 0, 1, 7);
     if (path2) {
         console.log("Path found:", path2.map(function (node) { return "(".concat(node.x, ", ").concat(node.y, ")"); }).join(" -> "));
@@ -210,6 +258,7 @@ function runTestCases() {
         console.log("No path found.");
     }
     printGrid(grid, grid[0][0], grid[1][7], path2);
+    printGridOrder(grid);
     printCosts(grid);
 }
 var gridRows = 15; // Number of rows in the grid
@@ -259,23 +308,7 @@ function crossWordMaze() {
     addObstacle(grid, 10, 13);
     addObstacle(grid, 4, 14);
     addObstacle(grid, 10, 14);
+    addObstacle(grid, 4, 2);
     return grid;
 }
-// // Adding a horizontal barrier with a gap
-// for (let i = 0; i < gridCols; i++) {
-//     if (i !== 4) { // Gap at (4, 2)
-//         addObstacle(2, i);
-//     }
-// }
-// addObstacle(4,0);
-// addObstacle(4,2);
-// addObstacle(4,3);
-// addObstacle(4,4);
-// addObstacle(4,5);
-// // Adding a vertical barrier with a gap
-// for (let j = 0; j < gridRows; j++) {
-//     if (j !== 5) { // Gap at (6, 5)
-//         addObstacle(j, 6);
-//     }
-// }
 runTestCases();
