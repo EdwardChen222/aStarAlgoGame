@@ -18,6 +18,8 @@ export class GameScene extends PIXI.Container {
     private optimizedPath: aNode[] | null = null;
     private pathVisuals: PIXI.Graphics[] = [];
     private pathVisible = false;
+    private score: number = 0;
+    private scoreText: PIXI.Text;
 
     constructor(app: PIXI.Application) {
         super();
@@ -29,9 +31,54 @@ export class GameScene extends PIXI.Container {
         this.addChild(this.board);
         this.createToggleButton();
         this.initializeGame();
+        this.scoreText = new PIXI.Text(`Moves: ${this.score}`, {
+            fontFamily: 'Arial',
+            fontSize: 24,
+            fill: 0xffffff,
+        });
+        this.createScoreboard();
     }  
     
+    private createScoreboard(): void {
+        this.scoreText = new PIXI.Text(`Moves: ${this.score}`, {
+            fontFamily: 'Arial',
+            fontSize: 24,
+            fill: 0xffffff,
+        });
+        this.scoreText.x = 10;
+        this.scoreText.y = 10;
+        this.app.stage.addChild(this.scoreText);
+    }
+    
+    private updateScore(): void {
+        this.score++;
+        this.scoreText.text = `Moves: ${this.score}`;
+    }
 
+    private highlightPossibleMoves(): void {
+        // Clear previous highlights
+        this.clearPath();
+    
+        // Assuming dog's current position is known
+        const dogCurrentPos = { x: this.dogSprite.x, y: this.dogSprite.y };
+        const dogGridPos = this.screenToGrid(dogCurrentPos.x, dogCurrentPos.y);
+    
+        // Get accessible neighbors
+        const accessibleNeighbors = this.pathfinder.getNeighbors(this.grid[dogGridPos.gridX][dogGridPos.gridY]);
+    
+        accessibleNeighbors.forEach(neighbor => {
+            if (!neighbor.isObstacle) {
+                const marker = new PIXI.Graphics();
+                marker.beginFill(0x00ff00, 0.5).drawCircle(neighbor.x * (this.cellSize + this.gap) + this.cellSize / 2, neighbor.y * (this.cellSize + this.gap) + this.cellSize / 2, this.cellSize / 4).endFill();
+                marker.interactive = true;
+                marker.buttonMode = true;
+                marker.on('pointerdown', () => this.moveDogTo(neighbor.x, neighbor.y));
+                this.board.addChild(marker);
+                this.pathVisuals.push(marker); // Add to pathVisuals for easy cleanup
+            }
+        });
+    }
+    
     private initializeGame(): void {
         this.setupBoard();
         this.setupSprites();
