@@ -6,55 +6,53 @@ const app = new PIXI.Application({
 	resolution: window.devicePixelRatio || 1,
 	autoDensity: true,
 	backgroundColor: 0x000000,
-	width: 640,
-	height: 480
+	width: window.innerWidth,
+	height: window.innerHeight
 });
 
 const sceny: GameScene = new GameScene(app);
 app.stage.addChild(sceny);
 
 
-// const myScene = new GameScene(app);
-// app.stage.addChild(myScene);
-// const cellSize = 40; // Size of each cell
-// const board: PIXI.Container = new PIXI.Container();
-// //center the board in the application
-// board.x = (app.screen.width - (10 * cellSize)) / 2;
-// board.y = (app.screen.height - (10 * cellSize)) / 2;
-// app.stage.addChild(board);
+// In index.ts
+document.addEventListener('click', (event) => {
+    const point = new PIXI.Point(event.clientX, event.clientY);
+    const localPoint = app.stage.toLocal(point);
 
-// const styly: PIXI.TextStyle = new PIXI.TextStyle({
-//     align: "center",
-//     fill: "#754c24",
-//     fontSize: 42
+    const {gridX, gridY} = sceny.screenToGrid(localPoint.x, localPoint.y);
+
+    // Check if the clicked position is the dog's current position
+    //const dogPos = sceny.getDogPosition();
+    //const dogGridPos = sceny.screenToGridSprites(dogPos.x, dogPos.y);
+	// console.log("mouse position:", gridX, gridY);
+	// console.log("dog position1:", dogPos.x, dogPos.y);
+	// console.log("dog position:", dogGridPos.gridX, dogGridPos.gridY);
+    // If clicked on the dog, highlight possible moves
+    const possibleMoves = sceny.getPossibleMoves();
+	console.log("possible moves", possibleMoves);
+    // Now highlight these moves. This part would need sceny to have a method to highlight nodes
+    sceny.highlightNodes(possibleMoves); // You'll need to implement this method in GameScene
+    // Check if clicked position is within possible moves
+	const isPossibleMove = possibleMoves.some(node => node.x === gridX && node.y === gridY);
+	if (isPossibleMove) {
+		// If a possible move is clicked, move the dog
+		console.log("possible move");
+		sceny.moveDog(gridX, gridY);
+		const possibleMoves = sceny.getPossibleMoves();
+		console.log("possible moves", possibleMoves);
+		sceny.highlightNodes(possibleMoves);
+	}
+});
+
+// document.addEventListener('click', (event) => {
+// 	// Convert the click position to local coordinates within the GameScene
+// 	const point = new PIXI.Point(event.clientX, event.clientY);
+// 	const localPoint = app.stage.toLocal(point);
+// 	// Now you can do something with this position, like converting it to grid coordinates
+// 	// Assuming GameScene has a method called screenToGrid or similar
+// 	// Note: You'll need to make sure methods you want to call like this are public
+// 	const {gridX, gridY} = sceny.screenToGrid(localPoint.x, localPoint.y);
+// 	console.log(`Clicked on grid coordinates: ${gridX}, ${gridY}`);
+
+// 	// Optionally, trigger a method within the scene based on the click
 // });
-// const texty: PIXI.Text = new PIXI.Text('CS397 demo', styly); // Text supports unicode!
-// app.stage.addChild(texty);
-
-// //create a new texture for the grid
-// const texture = PIXI.Texture.from('https://www.icolorpalette.com/download/solidcolorimage/006400_solid_color_background_icolorpalette.png')
-// //Create a 10x10 grid
-// const gap = 4; // Gap between cells
-// for (let i = 0; i < 100; i++){
-// 	const grid = new PIXI.Sprite(texture);
-// 	grid.width = cellSize;
-// 	grid.height = cellSize;
-// 	grid.anchor.set(0.5);
-// 	// Position each grid cell with a gap between them
-// 	grid.x = (i % 10) * (cellSize + gap) + cellSize / 2;
-// 	grid.y = Math.floor(i / 10) * (cellSize + gap) + cellSize / 2;
-// 	board.addChild(grid);
-// }
-
-//filter demo
-// const myBlurFilter = new PIXI.BlurFilter();
-// board.filters = [myBlurFilter];
-
-// const clampy: Sprite = Sprite.from("clampy.png");
-
-// clampy.anchor.set(0.5);
-
-// clampy.x = app.screen.width / 2;
-// clampy.y = app.screen.height / 2;
-
-// conty.addChild(clampy);
