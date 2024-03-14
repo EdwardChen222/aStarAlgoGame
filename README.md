@@ -12,7 +12,7 @@
 <h3 align="center">A* Algorithm Game</h3>
 
   <p align="center">
-    A game designed for learners to think about efficiency and optimization through the A star algorithm
+    A game designed for learners to think about efficiency and optimization through the A* algorithm
 
   </p>
 </div>
