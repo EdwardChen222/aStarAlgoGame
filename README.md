@@ -6,7 +6,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/github_username/repo_name">
-<!--   <img src="https://firebasestorage.googleapis.com/v0/b/ezapartments-a35e6.appspot.com/o/Tenny.png?alt=media&token=6fb4668f-d562-498b-a6f0-61069c3acb34" alt="Logo" width="160" height="80"> -->
+  <img src="static/preview.png">
   </a>
 
 <h3 align="center">A* Algorithm Game</h3>
